@@ -1,116 +1,144 @@
+# Boruvka's algorithm to find Minimum Spanning
+# Tree of a given connected, undirected and weighted graph
+  
 from collections import defaultdict
-
+  
+#Class to represent a graph
 class Graph:
+  
+    def __init__(self,vertices):
+        self.V= vertices #No. of vertices
+        self.graph = [] # default dictionary to store graph
+          
+   
+    # function to add an edge to graph
+    def addEdge(self,u,v,w):
+        self.graph.append([u,v,w])
+  
+    # A utility function to find set of an element i
+    # (uses path compression technique)
+    def find(self, parent, i):
+        if parent[i] == i:
+            return i
+        return self.find(parent, parent[i])
+  
+    # A function that does union of two sets of x and y
+    # (uses union by rank)
+    def union(self, parent, rank, x, y):
+        xroot = self.find(parent, x)
+        yroot = self.find(parent, y)
+  
+        # Attach smaller rank tree under root of high rank tree
+        # (Union by Rank)
+        if rank[xroot] < rank[yroot]:
+            parent[xroot] = yroot
+        elif rank[xroot] > rank[yroot]:
+            parent[yroot] = xroot
+        #If ranks are same, then make one as root and increment
+        # its rank by one
+        else :
+            parent[yroot] = xroot
+            rank[xroot] += 1
+  
+    # The main function to construct MST using Kruskal's algorithm
+    def boruvkaMST(self):
+        parent = []; rank = []; 
+  
+        # An array to store index of the cheapest edge of
+        # subset. It store [u,v,w] for each component
+        cheapest =[]
+  
+        # Initially there are V different trees.
+        # Finally there will be one tree that will be MST
+        numTrees = self.V
+        MSTweight = 0
+  
+        # Create V subsets with single elements
+        for node in range(self.V):
+            parent.append(node)
+            rank.append(0)
+            cheapest =[-1] * self.V
+      
+        # Keep combining components (or sets) until all
+        # compnentes are not combined into single MST
+  
+        while numTrees > 1:
+  
+            # Traverse through all edges and update
+               # cheapest of every component
+            for i in range(len(self.graph)):
+  
+                # Find components (or sets) of two corners
+                # of current edge
+                u,v,w =  self.graph[i]
+                set1 = self.find(parent, u)
+                set2 = self.find(parent ,v)
+  
+                # If two corners of current edge belong to
+                # same set, ignore current edge. Else check if 
+                # current edge is closer to previous
+                # cheapest edges of set1 and set2
+                if set1 != set2:     
+                      
+                    if cheapest[set1] == -1 or cheapest[set1][2] > w :
+                        cheapest[set1] = [u,v,w] 
+  
+                    if cheapest[set2] == -1 or cheapest[set2][2] > w :
+                        cheapest[set2] = [u,v,w]
+  
+            # Consider the above picked cheapest edges and add them
+            # to MST
+            for node in range(self.V):
+  
+                #Check if cheapest for current set exists
+                if cheapest[node] != -1:
+                    u,v,w = cheapest[node]
+                    set1 = self.find(parent, u)
+                    set2 = self.find(parent ,v)
+  
+                    if set1 != set2 :
+                        MSTweight += w
+                        self.union(parent, rank, set1, set2)
+                        #print ("Edge %d-%d with weight %d included in MST" % (u,v,w))
+                        numTrees = numTrees - 1
+              
+            #reset cheapest array
+            cheapest =[-1] * self.V
+  
+              
+        #print ("Weight of MST is %d" % MSTweight)
 
-    def __init__(self, num_of_vertices):
-        self.v = num_of_vertices # number of nodes
-        self.edges = [] # list of edges
-        self.components = {} # stores the index of component wich a node belongs to
+import random
+import math
 
-    def add_edge(self, u, v, weight):
-        self.edges.append([u,v,weight])
+def generate_graph(n):
+    g = Graph(n)
+    for i in range(n):
+        u = random.randint(0,n-1)
+        v = random.randint(0,n-1)
+        w = random.randint(1,100)
+        if(u == v):
+            continue
+        g.addEdge(u,v,w)
+    for i in range(1,n):
+        w = random.randint(1,100)
+        g.addEdge(i-1,i,w)
+    return g
 
-    def find_component(self, u):
-        if self.components[u] == u: # root
-            return u
-        return self.find_component(self.components[u])
+import time
 
-    def set_component(self, u):
-        if self.components[u] == u: # root
-            return
-        else:
-            for k in self.components.keys(): # find root of component
-                self.components[k] = self.find_component(k)
+def test_boruvka(n):
+    start_time = time.time()
+    g = generate_graph(n)
+    g.boruvkaMST()
+    print(str(n) + " > " + str(time.time() - start_time))
 
-
-
-    def union(self, component_size, u, v): 
-
-        if component_size[u] <= component_size[v]:
-            self.components[u] = v
-            component_size[v] += component_size[u]
-
-        elif component_size[u] >= component_size[v]:
-            self.components[v] = self.find_component(u)
-            component_size[u] += component_size[v]
-
-        print(self.components)
-
-    def boruvka(self):
-        component_size = []
-        cheapest_edge = []
-
-        mst_weight = 0
-
-        cheapest_edge = [-1] * self.v
-
-        for vertex in range(self.v): # init self components
-            self.components.update({vertex : vertex})
-            component_size.append(1)
-
-        num_of_components = self.v
-
-        print("---------Forming MST------------")
-        while num_of_components > 1:
-            for i in range(len(self.edges)):
-
-                u = self.edges[i][0]
-                v = self.edges[i][1]
-                w = self.edges[i][2]
-
-                self.set_component(u) # set the root
-                self.set_component(v)
-
-                u_component = self.components[u] # root of u's component
-                v_component = self.components[v] # root of v's component
-
-                if u_component != v_component: # find cheapest edge
-                    if cheapest_edge[u_component] == -1 or cheapest_edge[u_component][2] > w:
-                        cheapest_edge[u_component] = [u, v, w]
-                    if cheapest_edge[v_component] == -1 or cheapest_edge[v_component][2] > w:
-                        cheapest_edge[v_component] = [u, v, w]
-
-            for vertex in range(self.v):
-                if cheapest_edge[vertex] != -1:
-                    u = cheapest_edge[vertex][0]
-                    v = cheapest_edge[vertex][1]
-                    w = cheapest_edge[vertex][2]
-
-                    self.set_component(u)
-                    self.set_component(v)
-
-                    u_component = self.components[u]
-                    v_component = self.components[v]
-
-                    if u_component != v_component: # add edge in MST
-                        mst_weight += w
-                        self.union(component_size, u_component, v_component)
-                        print("Edge " + str(u) + " - " + str(v) + " with weight " + str(w) + " is included in MST.")
-
-                        num_of_components -= 1
-
-            cheapest_edge = [-1] * self.v # clear cheapest edges
-            
-        print("----------------------------------")
-        print("The weight of MST is " + str(mst_weight))
-
-
-
-g = Graph(9)
-g.add_edge(0, 1, 4)
-g.add_edge(0, 6, 7)
-g.add_edge(1, 6, 11)
-g.add_edge(1, 7, 20)
-g.add_edge(1, 2, 9)
-g.add_edge(2, 3, 6)
-g.add_edge(2, 4, 2)
-g.add_edge(3, 4, 10)
-g.add_edge(3, 5, 5)
-g.add_edge(4, 5, 15)
-g.add_edge(4, 7, 1)
-g.add_edge(4, 8, 5)
-g.add_edge(5, 8, 12)
-g.add_edge(6, 7, 1)
-g.add_edge(7, 8, 3)
-
-g.boruvka()
+test_boruvka(10)
+test_boruvka(100)
+test_boruvka(1000)
+test_boruvka(10000)
+test_boruvka(100000)
+test_boruvka(1000000)
+test_boruvka(10000000)
+test_boruvka(100000000)
+test_boruvka(1000000000)
