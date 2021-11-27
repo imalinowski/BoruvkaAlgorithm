@@ -3,28 +3,28 @@ from collections import defaultdict
 class Graph:
 
     def __init__(self, num_of_vertices):
-        self.v = num_of_vertices
-        self.edges = []
-        self.components = {}
+        self.v = num_of_vertices # number of nodes
+        self.edges = [] # list of edges
+        self.components = {} # stores the index of component wich a node belongs to
 
     def add_edge(self, u, v, weight):
         self.edges.append([u,v,weight])
 
     def find_component(self, u):
-        if self.components[u] == u:
+        if self.components[u] == u: # root
             return u
         return self.find_component(self.components[u])
 
     def set_component(self, u):
-        if self.components[u] == u:
+        if self.components[u] == u: # root
             return
         else:
-            for k in self.components.keys():
+            for k in self.components.keys(): # find root of component
                 self.components[k] = self.find_component(k)
 
 
 
-    def union(self, component_size, u, v):
+    def union(self, component_size, u, v): 
 
         if component_size[u] <= component_size[v]:
             self.components[u] = v
@@ -44,11 +44,13 @@ class Graph:
 
         cheapest_edge = [-1] * self.v
 
-        for vertex in range(self.v):
+        for vertex in range(self.v): # init self components
             self.components.update({vertex : vertex})
             component_size.append(1)
 
         num_of_components = self.v
+
+        print("---------Forming MST------------")
         while num_of_components > 1:
             for i in range(len(self.edges)):
 
@@ -56,13 +58,13 @@ class Graph:
                 v = self.edges[i][1]
                 w = self.edges[i][2]
 
-                self.set_component(u)
+                self.set_component(u) # set the root
                 self.set_component(v)
 
-                u_component = self.components[u]
-                v_component = self.components[v]
+                u_component = self.components[u] # root of u's component
+                v_component = self.components[v] # root of v's component
 
-                if u_component != v_component:
+                if u_component != v_component: # find cheapest edge
                     if cheapest_edge[u_component] == -1 or cheapest_edge[u_component][2] > w:
                         cheapest_edge[u_component] = [u, v, w]
                     if cheapest_edge[v_component] == -1 or cheapest_edge[v_component][2] > w:
@@ -80,15 +82,16 @@ class Graph:
                     u_component = self.components[u]
                     v_component = self.components[v]
 
-                    if u_component != v_component:
+                    if u_component != v_component: # add edge in MST
                         mst_weight += w
                         self.union(component_size, u_component, v_component)
                         print("Edge " + str(u) + " - " + str(v) + " with weight " + str(w) + " is included in MST.")
 
                         num_of_components -= 1
 
-            cheapest_edge = [-1] * self.v
-
+            cheapest_edge = [-1] * self.v # clear cheapest edges
+            
+        print("----------------------------------")
         print("The weight of MST is " + str(mst_weight))
 
 
