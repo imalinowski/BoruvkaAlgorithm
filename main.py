@@ -9,11 +9,15 @@ class Graph:
     def __init__(self,vertices):
         self.V= vertices #No. of vertices
         self.graph = [] # default dictionary to store graph
+        self.test = set()
           
    
     # function to add an edge to graph
     def addEdge(self,u,v,w):
-        self.graph.append([u,v,w])
+        if(u+v not in self.test):
+            self.graph.append([u,v,w])
+            self.test.add(str(u)+str(v))
+            #print("add " + str(u) + " " + str(v))
   
     # A utility function to find set of an element i
     # (uses path compression technique)
@@ -111,9 +115,9 @@ class Graph:
 import random
 import math
 
-def generate_graph(n):
+def generate_graph(n,e):
     g = Graph(n)
-    for i in range(n):
+    for i in range(e):
         u = random.randint(0,n-1)
         v = random.randint(0,n-1)
         w = random.randint(1,100)
@@ -128,17 +132,12 @@ def generate_graph(n):
 import time
 
 def test_boruvka(n):
+    g = generate_graph(n,100000)
+    #print("graph "+ str(g.V) + " " + str(len(g.graph)), end = " ")
     start_time = time.time()
-    g = generate_graph(n)
     g.boruvkaMST()
-    print(str(n) + " > " + str(time.time() - start_time))
+    #print(str(n) + " " + str(time.time() - start_time))
+    print(str(time.time() - start_time))
 
-test_boruvka(10)
-test_boruvka(100)
-test_boruvka(1000)
-test_boruvka(10000)
-test_boruvka(100000)
-test_boruvka(1000000)
-test_boruvka(10000000)
-test_boruvka(100000000)
-test_boruvka(1000000000)
+for i in range(100, 4100, 100):
+    test_boruvka(i)
